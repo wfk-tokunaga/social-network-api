@@ -1,21 +1,30 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, Types } = require('mongoose');
 const dateFormat = require('../utils/dateFormat');
-// Thought
-// thoughtText
-// String
-// Required
-// Must be between 1 and 280 characters
-// createdAt
-// Date
-// Set default value to the current timestamp
-// Use a getter method to format the timestamp on query
-// username (The user that created this thought)
-// String
-// Required
-// reactions (These are like replies)
-// Array of nested documents created with the reactionSchema
-// Schema Settings
-// Create a virtual called reactionCount that retrieves the length of the thought's reactions array field on query.
+
+const ReactionSchema = new Schema({
+    reactionId: {
+        type: Schema.Types.ObjectId,
+        default: () => new Types.ObjectId()
+    },
+    reactionBody: {
+        type: String,
+        required: true,
+        maxLength: 280,
+    },
+    username: {
+        type: String,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        get: createdAtVal => dateFormat(createdAtVal)
+    },
+}, {
+    toJSON: {
+        getters: true
+    }
+});
 
 const ThoughtSchema = new Schema({
     thoughtText: {
@@ -38,12 +47,13 @@ const ThoughtSchema = new Schema({
     toJSON: {
         virtuals: true,
         getters: true,
-    }
+    },
+    id: false
 });
 
-UserSchema.virtual('friendCount').get(function() {
-    return this.friends.length;
-})
+ThoughtSchema.virtual('reactionCount').get(function() {
+    return this.reactions.length;
+});
 
 // Reaction (SCHEMA ONLY)
 // reactionId
@@ -61,32 +71,6 @@ UserSchema.virtual('friendCount').get(function() {
 // Set default value to the current timestamp
 // Use a getter method to format the timestamp on query
 
-const ReactionSchema = new Schema({
-    commentId: {
-        type: Schema.Types.ObjectId,
-        default: () => new Types.ObjectId()
-    },
-    reactionBody: {
-        type: String,
-        required: true,
-        maxLength: 280,
-    },
-    username: {
-        type: String,
-        required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        get: createdAtVal => dateFormat(createdAtVal)
-    },
-}, {
-    toJSON: {
-        virtuals: true,
-        getters: true
-    },
-    id: false
-});
 
-const Thought = model('Thought', UserSchema);
+const Thought = model('Thought', ThoughtSchema);
 module.exports = Thought;
